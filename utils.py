@@ -2,19 +2,27 @@ import math
 import torch
 import torch.nn as nn
 import numpy as np
+import cv2
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
+
+
+def transform(img):
+    # BGR to RGB
+    b, g, r = cv2.split(img)
+    img = cv2.merge([r, g, b])
+    return img
 
 
 def weights_init_kaiming(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
-        nn.init.kaiming_normal(m.weight.data, a=0, mode='fan_in')
+        nn.init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
     elif classname.find('Linear') != -1:
         nn.init.kaiming_normal(m.weight.data, a=0, mode='fan_in')
     elif classname.find('BatchNorm') != -1:
         # nn.init.uniform(m.weight.data, 1.0, 0.02)
         m.weight.data.normal_(mean=0, std=math.sqrt(2. / 9. / 64.)).clamp_(-0.025, 0.025)
-        nn.init.constant(m.bias.data, 0.0)
+        nn.init.constant_(m.bias.data, 0.0)
 
 
 def batch_PSNR(img1, img2, data_range):

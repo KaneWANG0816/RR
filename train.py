@@ -14,6 +14,7 @@ from tensorboardX import SummaryWriter
 from models import DnCNN
 from utils import *
 from loadDataset import TrainDataset
+import time
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -25,7 +26,6 @@ parser.add_argument("--maskDir", type=str, default="./data/train/masks", help='p
 parser.add_argument("--valRainDir", type=str, default="./data/test/rain", help='path of rain for val')
 parser.add_argument("--valGtDir", type=str, default="./data/test/norain", help='path of norain for val')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
-parser.add_argument("--preprocess", type=bool, default=False, help='run prepare_data or not')
 parser.add_argument("--batchSize", type=int, default=3, help="Training batch size")
 parser.add_argument("--num_of_layers", type=int, default=17, help="Number of total layers")
 parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs")
@@ -57,8 +57,11 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=opt.lr)
     # training
     writer = SummaryWriter(opt.logDir)
+    # Count time
+    startTotal = time.time()
     step = 0
     for epoch in range(opt.epochs):
+        start = time.time()
         if epoch < opt.milestone:
             current_lr = opt.lr
         else:
@@ -93,8 +96,8 @@ def main():
                 out = torch.clamp(out, 0., 1.)
                 psnr_train = batch_PSNR(out, gt, 1.)
                 ssim_train = batch_SSIM(out, gt, 1.)
-                print("[epoch %d][%d/%d] loss: %.4f PSNR_train: %.4f SSIM_train: %.4f" %
-                      (epoch + 1, i + 1, len(loader_train), loss.item(), psnr_train, ssim_train))
+                print("[epoch %d/%d][%d/%d] loss: %.4f PSNR_train: %.4f SSIM_train: %.4f" %
+                      (epoch + 1, opt.epochs, i + 1, len(loader_train), loss.item(), psnr_train, ssim_train))
                 # Log
                 writer.add_scalar('loss', loss.item(), step)
                 writer.add_scalar('PSNR on training data', psnr_train, step)
@@ -111,28 +114,48 @@ def main():
         model.eval()
         psnr_val = 0
         ssim_val = 0
+        count = 0
         for f in os.listdir(opt.valRainDir):
             # image
-            rain = cv2.imread(os.path.join(opt.rainDir, f))
+            count += 1
+            rain = cv2.imread(os.path.join(opt.valRainDir, f))
+            rain = transform(rain) / 255
             rain = np.transpose(rain, (2, 0, 1))
             rain = np.expand_dims(rain, axis=0)
-            rain = torch.Tensor(rain / 255).cuda()
-            gt = cv2.imread(os.path.join(opt.gtDir, f)) / 255
-            out = torch.clamp(rain - model(rain), 0., 1.)
+            rain = torch.Tensor(rain).cuda()
+
+            gt = cv2.imread(os.path.join(opt.valGtDir, f))
+            gt = transform(gt) / 255
+
+            mask = model(rain)
+
+            out = torch.clamp(rain - mask, 0., 1.)
+            out_tmp = out
             out = out.data.cpu().numpy().astype(np.float32)
-            out = np.transpose(out, (0, 2, 3, 1))[0, :, :, :]
+            out = np.transpose(out[0, :, :, :], (1, 2, 0))
+
             psnr = peak_signal_noise_ratio(out, gt, data_range=1)
             ssim = structural_similarity(out, gt, data_range=1, channel_axis=2)
             psnr_val += psnr
             ssim_val += ssim
-        psnr_val /= len(os.listdir(opt.rainDir))
-        ssim_val /= len(os.listdir(opt.rainDir))
-        print("\n[epoch %d] PSNR_val: %.4f SSIM_val: %.4f" % (epoch + 1, psnr_val, ssim_val))
+
+            if count == len(os.listdir(opt.valRainDir)):
+                writer.add_image('rain image val', rain[0, :, :, :], epoch)
+                writer.add_image('derain image val', out_tmp[0, :, :, :], epoch)
+                writer.add_image('norain image val', torch.Tensor(gt).permute((2, 0, 1)), epoch)
+
+        psnr_val /= len(os.listdir(opt.valRainDir))
+        ssim_val /= len(os.listdir(opt.valRainDir))
+        end = time.time()
+        print("\n[epoch %d/%d] PSNR_val: %.4f SSIM_val: %.4f, time cost of epoch: %d s" %
+              (epoch + 1, opt.epochs, psnr_val, ssim_val, end - start))
         writer.add_scalar('PSNR on validation dataset', psnr_val, epoch)
         writer.add_scalar('SSIM on validation dataset', ssim_val, epoch)
 
         # save model
-        torch.save(model.state_dict(), os.path.join(opt.modelDir, 'net%d.pth' % (epoch+1)))
+        torch.save(model.state_dict(), os.path.join(opt.modelDir, 'net%d.pth' % (epoch + 1)))
+    endTotal = time.time()
+    print("\n Total training time cost: %d s" % (endTotal - startTotal))
 
 
 if __name__ == "__main__":

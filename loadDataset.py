@@ -6,6 +6,8 @@ import cv2
 import torch.utils.data as udata
 import matplotlib.pyplot as plt
 
+from utils import transform
+
 
 class TrainDataset(udata.Dataset):
     def __init__(self, rainDir, gtDir, maskDir, length):
@@ -25,25 +27,19 @@ class TrainDataset(udata.Dataset):
         file_name = self.img_files[idx % self.file_num]
         img_file = os.path.join(self.rainDir, file_name)
         O = cv2.imread(img_file)
-        # BGR to RGB
-        b, g, r = cv2.split(O)
-        O = cv2.merge([r, g, b])
+        O = transform(O)
         O = O.astype(np.float32) / 255
         O = np.transpose(O, (2, 0, 1))
 
         gt_file = os.path.join(self.gtDir, file_name)
         B = cv2.imread(gt_file)
-        # BGR to RGB
-        b, g, r = cv2.split(B)
-        B = cv2.merge([r, g, b])
+        B = transform(B)
         B = B.astype(np.float32) / 255
         B = np.transpose(B, (2, 0, 1))
 
         mask_file = os.path.join(self.maskDir, file_name)
         M = cv2.imread(mask_file)
-        # BGR to RGB
-        b, g, r = cv2.split(M)
-        M = cv2.merge([r, g, b])
+        M = transform(M)
         M = M.astype(np.float32) / 255
         M = np.transpose(M, (2, 0, 1))
 
