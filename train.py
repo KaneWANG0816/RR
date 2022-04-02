@@ -11,7 +11,7 @@ from torch.autograd import Variable
 from torch.backends import cudnn
 from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
-from models import DnCNN
+from model import DnCNN
 from utils import *
 from loadDataset import TrainDataset
 import time

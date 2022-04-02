@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import matplotlib.pyplot as plt
-from models import DnCNN
+from model import DnCNN
 from utils import *
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
