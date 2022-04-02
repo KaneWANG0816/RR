@@ -16,6 +16,7 @@ parser.add_argument("--nl", type=int, default=17, help="Number of layers")
 parser.add_argument("--modelDir", type=str, default="models", help='path of models')
 parser.add_argument("--rainDir", type=str, default='./data/test/rain', help='path of rain')
 parser.add_argument("--gtDir", type=str, default='./data/test/norain', help='path of ground truth')
+parser.add_argument("--mode", type=bool, default=False, help='Single image derain test')
 opt = parser.parse_args()
 
 
