@@ -4,3 +4,4 @@ torch
 torchvision
 tensorboardX
 scikit-image
+matplotlib
