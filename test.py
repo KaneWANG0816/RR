@@ -14,10 +14,11 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 parser = argparse.ArgumentParser(description="DnCNN_Test")
 parser.add_argument("--nl", type=int, default=17, help="Number of layers")
-parser.add_argument("--modelDir", type=str, default="models", help='path of models')
+parser.add_argument("--modelDir", type=str, default="./models/net16.pth", help='path of model')
 parser.add_argument("--rainDir", type=str, default='./data/test/rain', help='path of rain')
 parser.add_argument("--gtDir", type=str, default='./data/test/norain', help='path of ground truth')
 parser.add_argument("--outDir", type=str, default='./out', help='path of derain results')
+
 opt = parser.parse_args()
 
 
@@ -26,7 +27,7 @@ def main():
     print('Loading model ...\n')
     model = DnCNN(channels=3, num_of_layers=opt.nl)
     model = model.cuda()
-    model.load_state_dict(torch.load(os.path.join(opt.modelDir, 'net14.pth')))
+    model.load_state_dict(torch.load(opt.modelDir))
     model.eval()
 
     # process data
