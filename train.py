@@ -1,5 +1,6 @@
 import os
 import argparse
+import sys
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
@@ -20,19 +21,20 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 parser = argparse.ArgumentParser(description="DnCNN")
-parser.add_argument("--rainDir", type=str, default="./data/rain100L/train/rain", help='path of rain')
-parser.add_argument("--gtDir", type=str, default="./data/rain100L/train/norain", help='path of norain')
-parser.add_argument("--maskDir", type=str, default="./data/rain100L/train/masks", help='path of mask')
-parser.add_argument("--valRainDir", type=str, default="./data/rain100L/test/rain", help='path of rain for val')
-parser.add_argument("--valGtDir", type=str, default="./data/rain100L/test/norain", help='path of norain for val')
+parser.add_argument("--rainDir", type=str, default="./data/rain100H/train/rain", help='path of rain')
+parser.add_argument("--gtDir", type=str, default="./data/rain100H/train/norain", help='path of norain')
+parser.add_argument("--maskDir", type=str, default="./data/rain100H/train/masks", help='path of mask')
+parser.add_argument("--valRainDir", type=str, default="./data/rain100H/test/rain", help='path of rain for val')
+parser.add_argument("--valGtDir", type=str, default="./data/rain100H/test/norain", help='path of norain for val')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
 parser.add_argument("--batchSize", type=int, default=2, help="Training batch size")
 parser.add_argument("--num_of_layers", type=int, default=17, help="Number of total layers")
 parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs")
 parser.add_argument("--milestone", type=int, default=30, help="When to decay learning rate; should be less than epochs")
 parser.add_argument("--lr", type=float, default=1e-3, help="Initial learning rate")
-parser.add_argument("--logDir", type=str, default="./logs/rain100L", help='path of log files')
-parser.add_argument("--modelDir", type=str, default="./models/rain100L", help='path of models')
+parser.add_argument("--logDir", type=str, default="./logs/rain100H", help='path of log files')
+parser.add_argument("--modelDir", type=str, default="./models/rain100H", help='path of models')
+parser.add_argument("--valSize", type=int, default=100, help='size of validation dataset default: float("inf")')
 opt = parser.parse_args()
 
 
@@ -117,33 +119,34 @@ def main():
         count = 0
         for f in os.listdir(opt.valRainDir):
             # image
-            count += 1
-            rain = cv2.imread(os.path.join(opt.valRainDir, f))
-            rain = transform(rain) / 255
-            rain = np.transpose(rain, (2, 0, 1))
-            rain = np.expand_dims(rain, axis=0)
-            rain = torch.Tensor(rain).cuda()
+            if count < opt.valSize:
+                rain = cv2.imread(os.path.join(opt.valRainDir, f))
+                rain = transform(rain) / 255
+                rain = np.transpose(rain, (2, 0, 1))
+                rain = np.expand_dims(rain, axis=0)
+                rain = torch.Tensor(rain).cuda()
 
-            gt = cv2.imread(os.path.join(opt.valGtDir, f))
-            gt = transform(gt) / 255
+                gt = cv2.imread(os.path.join(opt.valGtDir, f))
+                gt = transform(gt) / 255
 
-            mask = model(rain)
+                mask = model(rain)
 
-            out = torch.clamp(rain - mask, 0., 1.)
-            out_tmp = out
-            out = out.data.cpu().numpy().astype(np.float32)
-            out = np.transpose(out[0, :, :, :], (1, 2, 0))
+                out = torch.clamp(rain - mask, 0., 1.)
+                out_tmp = out
+                out = out.data.cpu().numpy().astype(np.float32)
+                out = np.transpose(out[0, :, :, :], (1, 2, 0))
 
-            psnr = peak_signal_noise_ratio(out, gt, data_range=1)
-            ssim = structural_similarity(out, gt, data_range=1, channel_axis=2)
-            psnr_val += psnr
-            ssim_val += ssim
-
-            if count == len(os.listdir(opt.valRainDir)):
-                writer.add_image('rain image val', rain[0, :, :, :], epoch)
-                writer.add_image('derain image val', out_tmp[0, :, :, :], epoch)
-                writer.add_image('norain image val', torch.Tensor(gt).permute((2, 0, 1)), epoch)
-
+                psnr = peak_signal_noise_ratio(out, gt, data_range=1)
+                ssim = structural_similarity(out, gt, data_range=1, channel_axis=2)
+                psnr_val += psnr
+                ssim_val += ssim
+                count += 1
+                if count == len(os.listdir(opt.valRainDir)):
+                    writer.add_image('rain image val', rain[0, :, :, :], epoch)
+                    writer.add_image('derain image val', out_tmp[0, :, :, :], epoch)
+                    writer.add_image('norain image val', torch.Tensor(gt).permute((2, 0, 1)), epoch)
+            else:
+                break
         psnr_val /= len(os.listdir(opt.valRainDir))
         ssim_val /= len(os.listdir(opt.valRainDir))
         end = time.time()

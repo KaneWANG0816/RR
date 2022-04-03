@@ -46,19 +46,21 @@ def datasetCrop():
 
 
 def datasetRotate():
-    dir_rain = Path('data/rain1400_source/train/rain')
-    dir_norain = Path('data/rain1400_source/train/norain')
-    dir_rain_test = Path('data/rain1400_source/test/rain')
-    dir_norain_test = Path('data/rain1400_source/test/norain')
+    dir_rain = Path('data/rain100H_source/train/rain')
+    dir_norain = Path('data/rain100H_source/train/norain')
+    dir_rain_test = Path('data/rain100H_source/test/rain')
+    dir_norain_test = Path('data/rain100H_source/test/norain')
 
     print("Generating rain_masks")
-    imgSize = [384, 512]
+    imgSize = [321, 481]
 
     with os.scandir(dir_rain) as imgs:
         for img in imgs:
-            rain = cv2.imread(str(dir_rain) + '/' + img.name)
             print(img.name)
-            norain = cv2.imread(str(dir_norain) + '/' + img.name.split('_')[0]+'.jpg')
+            rain = cv2.imread(str(dir_rain) + '/' + img.name)
+            norain = cv2.imread(str(dir_norain) + '/' + img.name)
+            # for rain1400
+            # norain = cv2.imread(str(dir_norain) + '/' + img.name.split('_')[0]+'.jpg')
             mask = rain - norain
             if rain.shape[0] != imgSize[0] and rain.shape[1] != imgSize[1]:
                 rain = cv2.rotate(rain, cv2.cv2.ROTATE_90_CLOCKWISE)
@@ -69,21 +71,23 @@ def datasetRotate():
             else:
                 print(rain.shape)
 
-            cv2.imwrite("./data/rain1400/train/rain/" + img.name, rain)
-            cv2.imwrite("./data/rain1400/train/masks/" + img.name, mask)
-            cv2.imwrite("./data/rain1400/train/norain/" + img.name, norain)
+            cv2.imwrite("./data/rain100H/train/rain/" + img.name, rain)
+            cv2.imwrite("./data/rain100H/train/masks/" + img.name, mask)
+            cv2.imwrite("./data/rain100H/train/norain/" + img.name, norain)
 
     print("Generating test dataset")
     with os.scandir(dir_rain_test) as imgs:
         for img in imgs:
             print(img.name)
             rain = cv2.imread(str(dir_rain_test) + '/' + img.name)
-            norain = cv2.imread(str(dir_norain_test) + '/' + img.name.split('_')[0]+'.jpg')
+            norain = cv2.imread(str(dir_norain_test) + '/' + img.name)
+            # for rain1400
+            # norain = cv2.imread(str(dir_norain_test) + '/' + img.name.split('_')[0]+'.jpg')
             if rain.shape[0] != imgSize[0]:
                 rain = cv2.rotate(rain, cv2.cv2.ROTATE_90_CLOCKWISE)
                 norain = cv2.rotate(norain, cv2.cv2.ROTATE_90_CLOCKWISE)
-            cv2.imwrite("./data/rain1400/test/rain/" + img.name, rain)
-            cv2.imwrite("./data/rain1400/test/norain/" + img.name, norain)
+            cv2.imwrite("./data/rain100H/test/rain/" + img.name, rain)
+            cv2.imwrite("./data/rain100H/test/norain/" + img.name, norain)
     print("done")
 
 
