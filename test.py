@@ -7,7 +7,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 parser = argparse.ArgumentParser(description="DnCNN_Test")
 parser.add_argument("--nl", type=int, default=17, help="Number of layers")
-parser.add_argument("--modelDir", type=str, default="./models/net16.pth", help='path of model')
+parser.add_argument("--modelDir", type=str, default="./models/net45.pth", help='path of model')
 parser.add_argument("--rainDir", type=str, default='./data/test/rain', help='path of rain')
 parser.add_argument("--gtDir", type=str, default='./data/test/norain', help='path of ground truth')
 parser.add_argument("--outDir", type=str, default='./out', help='path of derain results')

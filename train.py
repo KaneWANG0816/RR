@@ -20,19 +20,19 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 parser = argparse.ArgumentParser(description="DnCNN")
-parser.add_argument("--rainDir", type=str, default="./data/train/rain", help='path of rain')
-parser.add_argument("--gtDir", type=str, default="./data/train/norain", help='path of norain')
-parser.add_argument("--maskDir", type=str, default="./data/train/masks", help='path of mask')
-parser.add_argument("--valRainDir", type=str, default="./data/test/rain", help='path of rain for val')
-parser.add_argument("--valGtDir", type=str, default="./data/test/norain", help='path of norain for val')
+parser.add_argument("--rainDir", type=str, default="./data/rain100L/train/rain", help='path of rain')
+parser.add_argument("--gtDir", type=str, default="./data/rain100L/train/norain", help='path of norain')
+parser.add_argument("--maskDir", type=str, default="./data/rain100L/train/masks", help='path of mask')
+parser.add_argument("--valRainDir", type=str, default="./data/rain100L/test/rain", help='path of rain for val')
+parser.add_argument("--valGtDir", type=str, default="./data/rain100L/test/norain", help='path of norain for val')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
-parser.add_argument("--batchSize", type=int, default=3, help="Training batch size")
+parser.add_argument("--batchSize", type=int, default=2, help="Training batch size")
 parser.add_argument("--num_of_layers", type=int, default=17, help="Number of total layers")
 parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs")
 parser.add_argument("--milestone", type=int, default=30, help="When to decay learning rate; should be less than epochs")
 parser.add_argument("--lr", type=float, default=1e-3, help="Initial learning rate")
-parser.add_argument("--logDir", type=str, default="./logs", help='path of log files')
-parser.add_argument("--modelDir", type=str, default="./models", help='path of models')
+parser.add_argument("--logDir", type=str, default="./logs/rain100L", help='path of log files')
+parser.add_argument("--modelDir", type=str, default="./models/rain100L", help='path of models')
 opt = parser.parse_args()
 
 
@@ -53,7 +53,7 @@ def main():
     # Move to GPU
     model = model.cuda()
     criterion.cuda()
-    # Optimizer
+    # Optimizer++++++++
     optimizer = optim.Adam(model.parameters(), lr=opt.lr)
     # training
     writer = SummaryWriter(opt.logDir)
