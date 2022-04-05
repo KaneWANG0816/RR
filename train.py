@@ -13,9 +13,12 @@ from torch.backends import cudnn
 from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 from model import DnCNN
+from model_Res import DnCNN_Res
 from utils import *
 from loadDataset import TrainDataset
 import time
+torch.cuda.empty_cache()
+torch.cuda.memory_summary(device=None, abbreviated=False)
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -28,13 +31,15 @@ parser.add_argument("--valRainDir", type=str, default="./data/rain100H/test/rain
 parser.add_argument("--valGtDir", type=str, default="./data/rain100H/test/norain", help='path of norain for val')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
 parser.add_argument("--batchSize", type=int, default=2, help="Training batch size")
+parser.add_argument('--resume', type=int, default=0, help='resume')
 parser.add_argument("--num_of_layers", type=int, default=17, help="Number of total layers")
-parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs")
-parser.add_argument("--milestone", type=int, default=30, help="When to decay learning rate; should be less than epochs")
+parser.add_argument("--epochs", type=int, default=90, help="Number of training epochs")
+parser.add_argument("--milestone", type=int, default=89, help="When to decay learning rate; should be less than epochs")
 parser.add_argument("--lr", type=float, default=1e-3, help="Initial learning rate")
-parser.add_argument("--logDir", type=str, default="./logs/rain100H", help='path of log files')
-parser.add_argument("--modelDir", type=str, default="./models/rain100H", help='path of models')
-parser.add_argument("--valSize", type=int, default=100, help='size of validation dataset default: float("inf")')
+parser.add_argument("--logDir", type=str, default="./logs/rain100H_Res", help='path of log files')
+parser.add_argument("--modelDir", type=str, default="./models/rain100H_Res", help='path of models')
+parser.add_argument("--trainSize", type=int, default=1800, help='size of training dataset default: float("inf")')
+parser.add_argument("--valSize", type=int, default=0, help='size of validation dataset default: float("inf")')
 opt = parser.parse_args()
 
 
@@ -44,12 +49,14 @@ def main():
 
     # Load dataset
     print('Loading dataset ...\n')
-    dataset_train = TrainDataset(opt.rainDir, opt.gtDir, opt.maskDir, opt.batchSize * 1000)
+
+    dataset_train = TrainDataset(opt.rainDir, opt.gtDir, opt.maskDir,  opt.batchSize*opt.trainSize)
     loader_train = DataLoader(dataset=dataset_train, num_workers=0, batch_size=opt.batchSize, shuffle=True)
 
     print("%d training samples\n" % int(len(dataset_train)))
     # Build model
-    model = DnCNN(channels=3, num_of_layers=opt.num_of_layers)
+    # model = DnCNN(channels=3, num_of_layers=opt.num_of_layers)
+    model = DnCNN_Res(channels=3)
     model.apply(weights_init_kaiming)
     criterion = nn.MSELoss(size_average=False)
     # Move to GPU
@@ -60,9 +67,13 @@ def main():
     # training
     writer = SummaryWriter(opt.logDir)
     # Count time
+
+    if opt.resume:
+        model.load_state_dict(torch.load(os.path.join(opt.modelDir, 'net' + str(opt.resume) + '.pth')))
+
     startTotal = time.time()
-    step = 0
-    for epoch in range(opt.epochs):
+    step = opt.resume * opt.trainSize
+    for epoch in range(opt.resume, opt.epochs):
         start = time.time()
         if epoch < opt.milestone:
             current_lr = opt.lr
@@ -104,7 +115,7 @@ def main():
                 writer.add_scalar('loss', loss.item(), step)
                 writer.add_scalar('PSNR on training data', psnr_train, step)
                 writer.add_scalar('SSIM on training data', ssim_train, step)
-            if step % 500 == 0:
+            if step % 600 == 0:
                 rain = utils.make_grid(input.data, normalize=True, scale_each=True)
                 derain = utils.make_grid(out.data, normalize=True, scale_each=True)
                 norain = utils.make_grid(gt.data, normalize=True, scale_each=True)
@@ -116,10 +127,10 @@ def main():
         model.eval()
         psnr_val = 0
         ssim_val = 0
-        count = 0
+        count = 1
         for f in os.listdir(opt.valRainDir):
             # image
-            if count < opt.valSize:
+            if count <= opt.valSize:
                 rain = cv2.imread(os.path.join(opt.valRainDir, f))
                 rain = transform(rain) / 255
                 rain = np.transpose(rain, (2, 0, 1))
@@ -141,7 +152,7 @@ def main():
                 psnr_val += psnr
                 ssim_val += ssim
                 count += 1
-                if count == len(os.listdir(opt.valRainDir)):
+                if count > opt.valSize:
                     writer.add_image('rain image val', rain[0, :, :, :], epoch)
                     writer.add_image('derain image val', out_tmp[0, :, :, :], epoch)
                     writer.add_image('norain image val', torch.Tensor(gt).permute((2, 0, 1)), epoch)

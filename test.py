@@ -1,13 +1,14 @@
 import argparse
 import os
 from model import DnCNN
+from model_Res import DnCNN_Res
 from utils import *
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 parser = argparse.ArgumentParser(description="DnCNN_Test")
 parser.add_argument("--nl", type=int, default=17, help="Number of layers")
-parser.add_argument("--modelDir", type=str, default="./models/net45.pth", help='path of model')
+parser.add_argument("--modelDir", type=str, default="./models/rain100H_Res/net60.pth", help='path of model')
 parser.add_argument("--rainDir", type=str, default='./data/test/rain', help='path of rain')
 parser.add_argument("--gtDir", type=str, default='./data/test/norain', help='path of ground truth')
 parser.add_argument("--outDir", type=str, default='./out', help='path of derain results')
@@ -18,7 +19,8 @@ opt = parser.parse_args()
 def main():
     # Build model
     print('Loading model ...\n')
-    model = DnCNN(channels=3, num_of_layers=opt.nl)
+    model = DnCNN_Res(channels=3)
+    # model = DnCNN(channels=3, num_of_layers=opt.nl)
     model = model.cuda()
     model.load_state_dict(torch.load(opt.modelDir))
     model.eval()
@@ -47,7 +49,7 @@ def main():
         psnr_test += psnr
         ssim_test += ssim
 
-        cv2.imwrite(os.path.join(opt.outDir, f), out*255)
+        # cv2.imwrite(os.path.join(opt.outDir, f), out*255)
         print("%s PSNR %f SSIM %f" % (f, psnr, ssim))
     psnr_test /= len(os.listdir(opt.rainDir))
     ssim_test /= len(os.listdir(opt.rainDir))
