@@ -12,11 +12,15 @@ from torch.autograd import Variable
 from torch.backends import cudnn
 from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
-from model import DnCNN
+
+from model import net
+from model_init import DnCNN
 from model_Res import DnCNN_Res
 from utils import *
 from loadDataset import TrainDataset
 import time
+from model_Dilated import DnCNN_Dilated
+
 torch.cuda.empty_cache()
 torch.cuda.memory_summary(device=None, abbreviated=False)
 
@@ -29,17 +33,21 @@ parser.add_argument("--gtDir", type=str, default="./data/rain100H/train/norain",
 parser.add_argument("--maskDir", type=str, default="./data/rain100H/train/masks", help='path of mask')
 parser.add_argument("--valRainDir", type=str, default="./data/rain100H/test/rain", help='path of rain for val')
 parser.add_argument("--valGtDir", type=str, default="./data/rain100H/test/norain", help='path of norain for val')
+
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
 parser.add_argument("--batchSize", type=int, default=2, help="Training batch size")
-parser.add_argument('--resume', type=int, default=0, help='resume')
 parser.add_argument("--num_of_layers", type=int, default=17, help="Number of total layers")
-parser.add_argument("--epochs", type=int, default=90, help="Number of training epochs")
-parser.add_argument("--milestone", type=int, default=89, help="When to decay learning rate; should be less than epochs")
+
+parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs")
+parser.add_argument("--milestone", type=int, default=99, help="When to decay learning rate; should be less than epochs")
 parser.add_argument("--lr", type=float, default=1e-3, help="Initial learning rate")
-parser.add_argument("--logDir", type=str, default="./logs/rain100H_Res", help='path of log files')
-parser.add_argument("--modelDir", type=str, default="./models/rain100H_Res", help='path of models')
+
+parser.add_argument('--resume', type=int, default=0, help='resume')
+parser.add_argument("--logDir", type=str, default="./logs/rain100H_skip", help='path of log files')
+parser.add_argument("--modelDir", type=str, default="./models/rain100H_skip", help='path of models')
+
 parser.add_argument("--trainSize", type=int, default=1800, help='size of training dataset default: float("inf")')
-parser.add_argument("--valSize", type=int, default=0, help='size of validation dataset default: float("inf")')
+parser.add_argument("--valSize", type=int, default=0, help='size of validation dataset')
 opt = parser.parse_args()
 
 
@@ -56,13 +64,16 @@ def main():
     print("%d training samples\n" % int(len(dataset_train)))
     # Build model
     # model = DnCNN(channels=3, num_of_layers=opt.num_of_layers)
-    model = DnCNN_Res(channels=3)
+    # model = DnCNN_Res(channels=3)
+    model = DnCNN_Dilated(channels=3)
+    model = net(channels=3)
+
     model.apply(weights_init_kaiming)
     criterion = nn.MSELoss(size_average=False)
     # Move to GPU
     model = model.cuda()
     criterion.cuda()
-    # Optimizer++++++++
+    # Optimizer
     optimizer = optim.Adam(model.parameters(), lr=opt.lr)
     # training
     writer = SummaryWriter(opt.logDir)
@@ -115,7 +126,7 @@ def main():
                 writer.add_scalar('loss', loss.item(), step)
                 writer.add_scalar('PSNR on training data', psnr_train, step)
                 writer.add_scalar('SSIM on training data', ssim_train, step)
-            if step % 600 == 0:
+            if step % 400 == 0:
                 rain = utils.make_grid(input.data, normalize=True, scale_each=True)
                 derain = utils.make_grid(out.data, normalize=True, scale_each=True)
                 norain = utils.make_grid(gt.data, normalize=True, scale_each=True)
@@ -124,6 +135,8 @@ def main():
                 writer.add_image('norain image', norain, epoch)
             step += 1
         # the end of the epoch
+
+        # validation on test dataset. To save GPU memory, set opt.valSize to 0
         model.eval()
         psnr_val = 0
         ssim_val = 0

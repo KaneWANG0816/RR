@@ -14,7 +14,6 @@ class TrainDataset(udata.Dataset):
         super().__init__()
         self.rainDir = os.path.join(rainDir)
         self.gtDir = os.path.join(gtDir)
-        self.rainDir = os.path.join(rainDir)
         self.maskDir = os.path.join(maskDir)
         self.img_files = os.listdir(self.rainDir)
         self.file_num = len(self.img_files)

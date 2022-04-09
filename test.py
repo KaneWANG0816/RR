@@ -1,33 +1,38 @@
 import argparse
 import os
-from model import DnCNN
+
+from matplotlib import pyplot as plt
+
+from model import net
+from model_init import DnCNN
+from model_Dilated import DnCNN_Dilated
 from model_Res import DnCNN_Res
 from utils import *
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-parser = argparse.ArgumentParser(description="DnCNN_Test")
+parser = argparse.ArgumentParser(description="Model_Test")
 parser.add_argument("--nl", type=int, default=17, help="Number of layers")
-parser.add_argument("--modelDir", type=str, default="./models/rain100H_Res/net60.pth", help='path of model')
-parser.add_argument("--rainDir", type=str, default='./data/test/rain', help='path of rain')
-parser.add_argument("--gtDir", type=str, default='./data/test/norain', help='path of ground truth')
-parser.add_argument("--outDir", type=str, default='./out', help='path of derain results')
+parser.add_argument("--modelDir", type=str, default="./models/rain100H_tri", help='path of model')
+parser.add_argument("--rainDir", type=str, default='./data/rain100H/test/rain', help='path of rain')
+parser.add_argument("--gtDir", type=str, default='./data/rain100H/test/norain', help='path of ground truth')
+parser.add_argument("--outDir", type=str, default='./out/rain100H_Res', help='path of derain results')
 
 opt = parser.parse_args()
 
 
 def main():
     # Build model
-    print('Loading model ...\n')
-    model = DnCNN_Res(channels=3)
     # model = DnCNN(channels=3, num_of_layers=opt.nl)
+    # model = DnCNN_Res(channels=3)
+    # model = DnCNN_Dilated(channels=3)
+    model = net(channels=3)
     model = model.cuda()
     model.load_state_dict(torch.load(opt.modelDir))
     model.eval()
 
     # process data
 
-    print('Loading data info ...\n')
     psnr_test = 0
     ssim_test = 0
     for f in os.listdir(opt.rainDir):
@@ -50,11 +55,31 @@ def main():
         ssim_test += ssim
 
         # cv2.imwrite(os.path.join(opt.outDir, f), out*255)
-        print("%s PSNR %f SSIM %f" % (f, psnr, ssim))
+        # print("%s PSNR %f SSIM %f" % (f, psnr, ssim))
     psnr_test /= len(os.listdir(opt.rainDir))
     ssim_test /= len(os.listdir(opt.rainDir))
-    print("\nPSNR on test data %f SSIM on test data %f" % (psnr_test, ssim_test))
+
+    print("PSNR on test data %f SSIM on test data %f\n" % (psnr_test, ssim_test))
+    return ssim_test, psnr_test
 
 
 if __name__ == "__main__":
-    main()
+    l = len(os.listdir(opt.modelDir))
+    dir = opt.modelDir
+    epcho=list()
+    ssim=list()
+    psnr=list()
+    for i in range(1, l+1):
+        opt.modelDir = os.path.join(dir, 'net'+str(i)+'.pth')
+        print(opt.modelDir)
+        ssim_test,psnr_test = main()
+        epcho.append(i)
+        ssim.append(ssim_test)
+        psnr.append(psnr_test)
+    epcho = np.array(epcho)
+    ssim = np.array(ssim)
+    psnr = np.array(psnr)
+    plt.plot(epcho, ssim, label="SSIM")
+    plt.show()
+    plt.plot(epcho, psnr, label="PSNR")
+    plt.show()
