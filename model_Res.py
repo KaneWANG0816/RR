@@ -25,7 +25,8 @@ class BasicBlock(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        f = self.conv(x) + self.shortcut(x)
+        # f = self.conv(x) + self.shortcut(x)
+        f = self.conv(x) + x
         return self.relu(f)
 
 
