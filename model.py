@@ -9,8 +9,22 @@ class BasicBlock(nn.Module):
         kernel_size = 3
         padding = 1
 
+        # self.conv = nn.Sequential(
+        #     nn.Conv2d(features, features, kernel_size=kernel_size, padding=padding, bias=False),
+        #     nn.BatchNorm2d(features),
+        #     nn.ReLU(inplace=True),
+        #     nn.Conv2d(features, features, kernel_size=3, dilation=3, padding='same'),
+        #     nn.BatchNorm2d(features)
+        # )
         self.conv = nn.Sequential(
             nn.Conv2d(features, features, kernel_size=kernel_size, padding=padding, bias=False),
+            nn.BatchNorm2d(features),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(features, features, kernel_size=kernel_size, padding=padding, bias=False),
+            nn.BatchNorm2d(features)
+        )
+        self.dilated = nn.Sequential(
+            nn.Conv2d(features, features, kernel_size=1, dilation=1, padding='same'),
             nn.BatchNorm2d(features),
             nn.ReLU(inplace=True),
             nn.Conv2d(features, features, kernel_size=3, dilation=3, padding='same'),
@@ -25,8 +39,9 @@ class BasicBlock(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        f = self.conv(x) + self.shortcut(x)
-        return self.relu(f)
+        tmp = self.conv(x) + self.shortcut(x)
+        out = self.dilated(tmp) + self.shortcut(tmp)
+        return self.relu(out)
 
 
 class net(nn.Module):
@@ -40,7 +55,7 @@ class net(nn.Module):
                                 bias=False))
         layers.append(nn.ReLU(inplace=True))
 
-        for _ in range(9):
+        for _ in range(4):
             layers.append(BasicBlock(features))
 
         layers.append(nn.Conv2d(in_channels=features, out_channels=channels, kernel_size=kernel_size, padding=padding,
