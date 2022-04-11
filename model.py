@@ -43,8 +43,8 @@ class BasicBlock(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        tmp = self.conv(x) + self.shortcut(x)
-        out = self.dilated(tmp) + self.shortcut(tmp)
+        tmp = self.conv(x) + self.shortcut1(x)
+        out = self.dilated(tmp) + self.shortcut2(tmp)
         return self.relu(out)
 
 
