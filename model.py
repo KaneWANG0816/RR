@@ -31,20 +31,12 @@ class BasicBlock(nn.Module):
             nn.BatchNorm2d(features)
         )
 
-        self.shortcut1 = nn.Sequential(
-            nn.Conv2d(features, features, kernel_size=1, bias=False),
-            nn.BatchNorm2d(features)
-        )
-
-        self.shortcut2 = nn.Sequential(
-            nn.Conv2d(features, features, kernel_size=1, bias=False),
-            nn.BatchNorm2d(features)
-        )
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        tmp = self.conv(x) + self.shortcut1(x)
-        out = self.dilated(tmp) + self.shortcut2(tmp)
+        tmp = self.conv(x) + x
+        tmp = self.relu(tmp)
+        out = self.dilated(tmp) + tmp
         return self.relu(out)
 
 
@@ -59,7 +51,7 @@ class net(nn.Module):
                                 bias=False))
         layers.append(nn.ReLU(inplace=True))
 
-        for _ in range(4):
+        for _ in range(7):
             layers.append(BasicBlock(features))
 
         layers.append(nn.Conv2d(in_channels=features, out_channels=channels, kernel_size=kernel_size, padding=padding,
