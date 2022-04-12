@@ -34,10 +34,12 @@ Place it in the root of this project.
 
 [train.py](train.py) for training derain network
 
-Please set or modify args before training
+[test.py](test.py) for test batches of derain models<br>
+p.s.
 
+Please set or modify args before training or testing
 
-[test.py](test.py) for test batches of derain models
+### Try pre-trained derain model
 
 [derain.py](derain.py) for test on derain samples
 
