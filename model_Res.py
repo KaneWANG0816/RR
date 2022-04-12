@@ -17,15 +17,9 @@ class BasicBlock(nn.Module):
             nn.BatchNorm2d(features)
         )
 
-        self.shortcut = nn.Sequential(
-            nn.Conv2d(features, features, kernel_size=1, bias=False),
-            nn.BatchNorm2d(features)
-        )
-
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        # f = self.conv(x) + self.shortcut(x)
         f = self.conv(x) + x
         return self.relu(f)
 
