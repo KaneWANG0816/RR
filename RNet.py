@@ -24,9 +24,9 @@ class BasicBlock(nn.Module):
         return self.relu(f)
 
 
-class DnCNN_Res(nn.Module):
+class RNet(nn.Module):
     def __init__(self, channels):
-        super(DnCNN_Res, self).__init__()
+        super(RNet, self).__init__()
         kernel_size = 3
         padding = 1
         features = 64
