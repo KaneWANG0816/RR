@@ -40,9 +40,9 @@ class BasicBlock(nn.Module):
         return self.relu(out)
 
 
-class net(nn.Module):
+class RNetP(nn.Module):
     def __init__(self, channels):
-        super(net, self).__init__()
+        super(RNetP, self).__init__()
         kernel_size = 3
         padding = 1
         features = 64
