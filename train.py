@@ -44,7 +44,7 @@ parser.add_argument('--resume', type=int, default=0, help='resume')
 parser.add_argument("--logDir", type=str, default="./logs/rain100H_skip", help='path of log files')
 parser.add_argument("--modelDir", type=str, default="./models/rain100H_skip", help='path of models')
 
-parser.add_argument("--trainSize", type=int, default=1800, help='size of training dataset default: float("inf")')
+parser.add_argument("--trainSize", type=int, default=1800, help='size of training dataset')
 parser.add_argument("--valSize", type=int, default=0, help='size of validation dataset')
 opt = parser.parse_args()
 
