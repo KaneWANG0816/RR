@@ -42,5 +42,3 @@ Please set or modify args before training or testing
 ### Try pre-trained derain model
 
 [derain.py](derain.py) for test on derain samples
-
-## 

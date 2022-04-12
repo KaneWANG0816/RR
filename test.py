@@ -1,12 +1,8 @@
 import argparse
 import os
-
 from matplotlib import pyplot as plt
-
-from model import net
-from model_init import DnCNN
-from model_Dilated import DnCNN_Dilated
-from model_Res import DnCNN_Res
+from RNetP import RNetP
+from RNet import RNet
 from utils import *
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -23,10 +19,8 @@ opt = parser.parse_args()
 
 def main():
     # Build model
-    # model = DnCNN(channels=3, num_of_layers=opt.nl)
-    # model = DnCNN_Res(channels=3)
-    # model = DnCNN_Dilated(channels=3)
-    model = net(channels=3)
+    # model = RNet(channels=3)
+    model = RNetP(channels=3)
     model = model.cuda()
     model.load_state_dict(torch.load(opt.modelDir))
     model.eval()

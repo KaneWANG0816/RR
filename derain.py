@@ -22,7 +22,7 @@ def main(mod, dataset):
         if dataset == 'Rain100L':
             model.load_state_dict(torch.load('./model/RNet+Rain100L.pth'))
         else:
-            model.load_state_dict(torch.load('./model/RNet+Rain100L.pth'))
+            model.load_state_dict(torch.load('./model/RNet+Rain100H.pth'))
     else:
         model = RNet(channels=3)
         print('Loading model\n')
@@ -46,7 +46,7 @@ def main(mod, dataset):
     print('Deraining\n')
     for f in os.listdir(rainDir):
         # image
-        print(f)
+        print(os.path.join(rainDir, f))
         rain = cv2.imread(os.path.join(rainDir, f)) / 255
         rain = np.transpose(rain, (2, 0, 1))
         rain = np.expand_dims(rain, axis=0)
@@ -58,7 +58,7 @@ def main(mod, dataset):
         out = np.transpose(out[0, :, :, :], (1, 2, 0))
 
         cv2.imwrite(os.path.join(outDir, f), out * 255)
-        print('Derain with ' + mod + ' on ' + dataset + ' is done')
+    print('Derain with ' + mod + ' on ' + dataset + ' is done')
 
 
 if __name__ == "__main__":

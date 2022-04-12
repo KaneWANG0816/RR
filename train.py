@@ -12,14 +12,12 @@ from torch.autograd import Variable
 from torch.backends import cudnn
 from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
-
-from model import net
-from model_init import DnCNN
-from model_Res import DnCNN_Res
+from RNetP import RNetP
+from RNet import RNet
 from utils import *
 from loadDataset import TrainDataset
 import time
-from model_Dilated import DnCNN_Dilated
+
 
 torch.cuda.empty_cache()
 torch.cuda.memory_summary(device=None, abbreviated=False)
@@ -63,10 +61,8 @@ def main():
 
     print("%d training samples\n" % int(len(dataset_train)))
     # Build model
-    # model = DnCNN(channels=3, num_of_layers=opt.num_of_layers)
-    # model = DnCNN_Res(channels=3)
-    model = DnCNN_Dilated(channels=3)
-    model = net(channels=3)
+    # model = RNet(channels=3)
+    model = RNetP(channels=3)
 
     model.apply(weights_init_kaiming)
     criterion = nn.MSELoss(size_average=False)
