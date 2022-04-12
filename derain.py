@@ -8,67 +8,60 @@ from utils import *
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
+parser = argparse.ArgumentParser(description="Derain Test")
+parser.add_argument("--model", type=str, default="RNetP", help='Derain model: RNetP or RNet')
+opt = parser.parse_args()
+
 
 def main(mod, dataset):
     # Build model
-    print('Model: ' + mod + '\n')
     if mod == 'RNetP':
         model = RNetP(channels=3)
         print('Loading model\n')
         model = model.cuda()
         if dataset == 'Rain100L':
-            model.load_state_dict(torch.load('.'))
+            model.load_state_dict(torch.load('./model/RNet+Rain100L.pth'))
         else:
-            model.load_state_dict(torch.load(opt.modelDir))
+            model.load_state_dict(torch.load('./model/RNet+Rain100L.pth'))
     else:
-        model = DnCNN_Res(channels=3)
+        model = RNet(channels=3)
         print('Loading model\n')
         model = model.cuda()
         if dataset == 'Rain100L':
-            model.load_state_dict(torch.load(opt.modelDir))
-        else:
-            model.load_state_dict(torch.load(opt.modelDir))
+            model.load_state_dict(torch.load('./model/RNetRain100L.pth'))
 
+        else:
+            model.load_state_dict(torch.load('./model/RNetRain100H.pth'))
+
+    if dataset == 'Rain100L':
+        rainDir = './samples/Rain100L'
+        outDir = './out/Rain100L'
+    else:
+        rainDir = './samples/Rain100H'
+        outDir = './out/Rain100H'
 
     model.eval()
 
-    # process data
-    psnr_test = 0
-    ssim_test = 0
+    # Process
     print('Deraining\n')
-    for f in os.listdir(opt.rainDir):
+    for f in os.listdir(rainDir):
         # image
-        rain = cv2.imread(os.path.join(opt.rainDir, f)) / 255
+        print(f)
+        rain = cv2.imread(os.path.join(rainDir, f)) / 255
         rain = np.transpose(rain, (2, 0, 1))
         rain = np.expand_dims(rain, axis=0)
         rain = torch.Tensor(rain).cuda()
-
-        gt = cv2.imread(os.path.join(opt.gtDir, f)) / 255
 
         mask = model(rain)
         out = torch.clamp(rain - mask, 0., 1.)
         out = out.data.cpu().numpy().astype(np.float32)
         out = np.transpose(out[0, :, :, :], (1, 2, 0))
 
-        psnr = peak_signal_noise_ratio(out, gt, data_range=1)
-        ssim = structural_similarity(out, gt, data_range=1, channel_axis=2)
-        psnr_test += psnr
-        ssim_test += ssim
-
-        # cv2.imwrite(os.path.join(opt.outDir, f), out*255)
-        # print("%s PSNR %f SSIM %f" % (f, psnr, ssim))
-    psnr_test /= len(os.listdir(opt.rainDir))
-    ssim_test /= len(os.listdir(opt.rainDir))
-
-    print("PSNR on test data %f SSIM on test data %f\n" % (psnr_test, ssim_test))
-    return ssim_test, psnr_test
+        cv2.imwrite(os.path.join(outDir, f), out * 255)
+        print('Derain with ' + mod + ' on ' + dataset + ' is done')
 
 
 if __name__ == "__main__":
-    l = len(os.listdir(opt.modelDir))
-
-    opt.modelDir = os.path.join(dir, 'net' + str(i) + '.pth')
-    print(opt.modelDir)
-    ssim_test, psnr_test = main()
-
-
+    print(opt.model + '\n')
+    main(opt.model, 'Rain100L')
+    main(opt.model, 'Rain100H')
