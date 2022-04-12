@@ -9,13 +9,6 @@ class BasicBlock(nn.Module):
         kernel_size = 3
         padding = 1
 
-        # self.conv = nn.Sequential(
-        #     nn.Conv2d(features, features, kernel_size=kernel_size, padding=padding, bias=False),
-        #     nn.BatchNorm2d(features),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(features, features, kernel_size=3, dilation=3, padding='same'),
-        #     nn.BatchNorm2d(features)
-        # )
         self.conv = nn.Sequential(
             nn.Conv2d(features, features, kernel_size=kernel_size, padding=padding, bias=False),
             nn.BatchNorm2d(features),
@@ -23,34 +16,17 @@ class BasicBlock(nn.Module):
             nn.Conv2d(features, features, kernel_size=kernel_size, padding=padding, bias=False),
             nn.BatchNorm2d(features)
         )
-        self.dilated = nn.Sequential(
-            nn.Conv2d(features, features, kernel_size=1, dilation=1, padding='same'),
-            nn.BatchNorm2d(features),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(features, features, kernel_size=3, dilation=3, padding='same'),
-            nn.BatchNorm2d(features)
-        )
 
-        self.shortcut1 = nn.Sequential(
-            nn.Conv2d(features, features, kernel_size=1, bias=False),
-            nn.BatchNorm2d(features)
-        )
-
-        self.shortcut2 = nn.Sequential(
-            nn.Conv2d(features, features, kernel_size=1, bias=False),
-            nn.BatchNorm2d(features)
-        )
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        tmp = self.conv(x) + self.shortcut1(x)
-        out = self.dilated(tmp) + self.shortcut2(tmp)
-        return self.relu(out)
+        f = self.conv(x) + x
+        return self.relu(f)
 
 
-class net(nn.Module):
+class RNet(nn.Module):
     def __init__(self, channels):
-        super(net, self).__init__()
+        super(RNet, self).__init__()
         kernel_size = 3
         padding = 1
         features = 64
@@ -59,7 +35,7 @@ class net(nn.Module):
                                 bias=False))
         layers.append(nn.ReLU(inplace=True))
 
-        for _ in range(4):
+        for _ in range(9):
             layers.append(BasicBlock(features))
 
         layers.append(nn.Conv2d(in_channels=features, out_channels=channels, kernel_size=kernel_size, padding=padding,
