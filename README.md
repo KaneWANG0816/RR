@@ -40,8 +40,11 @@ p.s.
 Please set or modify args before training or testing
 
 ### Try pre-trained derain model
+Create a folder called 'out' with two subfolder called 'rain100L' and 'rain100H'<br>
+where the derain result shows<br>
 
 [derain.py](derain.py) for test on derain samples
+
 
 ## Evaluatoin Results
 
