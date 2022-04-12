@@ -37,7 +37,8 @@ Place it in the root of this project.
 Please set or modify args before training
 
 
-[test.py](test.py) for test derain network
+[test.py](test.py) for test batches of derain models
 
+[derain.py](derain.py) for test on derain samples
 
 ## 
