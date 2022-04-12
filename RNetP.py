@@ -9,13 +9,6 @@ class BasicBlock(nn.Module):
         kernel_size = 3
         padding = 1
 
-        # self.conv = nn.Sequential(
-        #     nn.Conv2d(features, features, kernel_size=kernel_size, padding=padding, bias=False),
-        #     nn.BatchNorm2d(features),
-        #     nn.ReLU(inplace=True),
-        #     nn.Conv2d(features, features, kernel_size=3, dilation=3, padding='same'),
-        #     nn.BatchNorm2d(features)
-        # )
         self.conv = nn.Sequential(
             nn.Conv2d(features, features, kernel_size=kernel_size, padding=padding, bias=False),
             nn.BatchNorm2d(features),
