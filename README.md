@@ -10,10 +10,15 @@ git clone https://github.com/KaneWANG0816/RR.git
 ```bash
 pip install -r requirements.txt
 ```
+### Environment:
+
+Python 3.8
+
+CUDA 11.3
 
 ### For training data
 
-Click [here]() to install datasets, including:
+Click [here](https://drive.google.com/file/d/1SPlNb19nmVCwLLdrzJnSrj-oJGGMMsxu/view?usp=sharing) to install datasets, including:
 <ul>
   <li>Rain100L: 200 training pairs and 100 testing pairs</li>
   <li>Rain100H: 1800 training pairs and 200 testing pairs</li>
